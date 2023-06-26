@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans, DBSCAN
 from PIL import Image
 
+
 def get_connection(townName="Town03", host="localhost", reloadWorld=True,
                    camaraLocation=carla.Location(140, -102, 39.6), camRotation=None, render=True,
                    syncMode=False,

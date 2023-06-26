@@ -39,6 +39,7 @@ class RecordingMode:
         y = (b[1] - a[1]) ** 2
         return math.sqrt(x + y)
 
+    # Add Location of occuring collisions to a list
     def collision_handler(self, event):
         # 'actor', 'frame', 'frame_number', 'normal_impulse', 'other_actor', 'timestamp', 'transform']
         """ handle collisions and calculate extra reward """
@@ -63,6 +64,7 @@ class RecordingMode:
         if add_coll:
             self.collision_locations.append(collision)
 
+    # Spawn vehicles
     def spawnVehicles(self, number_of_cars=30):
         car_bp = self.blueprint_library.filter('vehicle.*.*')
         tm = self.client.get_trafficmanager(8000)
@@ -81,6 +83,7 @@ class RecordingMode:
             collision_sensor_car.listen(lambda event: self.collision_handler(event))
             self.collision_Sensors.append(collision_sensor_car)
 
+    # Spawn walkers
     def spawnWalker(self, number_of_walkers=50):
 
         blueprintsWalkers = self.blueprint_library.filter('walker.*.*')
@@ -190,6 +193,7 @@ class RecordingMode:
             for col in self.collision_locations:
                 print(col[0], col[1])
 
+    # Set Markers in Carla to identify the map
     def identMap(self):
         location = carla.Location(x=100, y=100, z=5)
         self.draw_waypoint(location, "x100, y100")
@@ -200,16 +204,18 @@ class RecordingMode:
         location = carla.Location(x=200, y=200, z=5)
         self.draw_waypoint(location, "200, 200")
 
+    # Draw a waypoint in Carla
     def draw_waypoint(self, location, index, life_time=120.0):
 
         self.world.debug.draw_string(location, str(index), draw_shadow=False,
                                      color=carla.Color(r=255, g=0, b=0), life_time=life_time,
                                      persistent_lines=True)
-
+    # Record the simulation in a file
     def recordingCarla(self):
         print("Recording on file: ",
               self.client.start_recorder("/home/imech031/.config/Epic/CarlaUE4/Saved/recorder4.log", True))
 
+    # Save the collision data in a file
     def saveCollionDataJSON(self):
         f = open("./collisionData.log", "w")
         f.write("{\n")

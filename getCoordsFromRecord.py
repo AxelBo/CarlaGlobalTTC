@@ -4,7 +4,8 @@ import time
 import connectionCarla
 import carla
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+
+# get the x, y and z coordinates of an actor
 def get_actor_position(world, vehicle_id):
     vehicle = world.get_actor(vehicle_id)
     if vehicle is not None:
@@ -17,14 +18,16 @@ def get_actor_position(world, vehicle_id):
     else:
         print("Actor not found")
         return None
+
 def euclidean_distance(point1, point2):
     return ((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2) ** 0.5
 
+# Get all files in a folder that start with a number and an underscore
 def get_filtered_files(folder_path):
     files = os.listdir(folder_path)
     return [f for f in files if f[0].isdigit() and f[1] == "_"]
 
-
+# Check if a vehicle has multiple entries for a similar timeframe
 def groups_contain(row, groups):
     id_vehicle = row[0]
     id_walker = row[3]
@@ -36,6 +39,7 @@ def groups_contain(row, groups):
         count += 1
     return False, -1
 
+# Load all data from the files in a folder
 def load_data(path_prefix):
     data = []
     for i in range(20):
@@ -49,6 +53,7 @@ def load_data(path_prefix):
                     data.append(line_data)
     return data
 
+# Select smalles ttc for each group
 def process_groups(data):
     groups = []
     for line in data:
@@ -61,6 +66,7 @@ def process_groups(data):
             groups.append(values)
     return groups
 
+# Get a Carla connection with set view
 def get_connection():
     conncetion = connectionCarla.CarlaConnection()
     sysncModeEnable = False
@@ -68,6 +74,8 @@ def get_connection():
     camLocation = carla.Location(spawnLocationWalker.x - 20, spawnLocationWalker.y - 15, spawnLocationWalker.z + 30)
     conncetion.__int__(reloadWorld=True, syncMode=sysncModeEnable, render=True, port=2000, camaraLocation=camLocation)
     return conncetion
+
+# Return the distance between two actors
 def distance_actor(actor1, actor2):
     try:
         pos1 = actor1.get_location()
@@ -78,6 +86,7 @@ def distance_actor(actor1, actor2):
         print("Fail")
         return 999
 
+# Return the controls of a walker
 def get_walker_action(world: carla.World, walker_id: int) -> carla.WalkerControl:
     """
     Get the current action of a given walker in the given world.
@@ -89,11 +98,13 @@ def get_walker_action(world: carla.World, walker_id: int) -> carla.WalkerControl
     control = walker.get_control()
     return control
 
+# Returns xy coordinates of two actors
 def getXYVehicleWalker(world, vehicle_id, walker_id):
     pos1 = get_actor_position(world, vehicle_id)
     pos2 = get_actor_position(world, walker_id)
     return [pos1[0], pos1[1]], [pos2[0], pos2[1]]
 
+# Replay a situation and return the xy coordinates of Vehicle and Walker
 def show_x_rows_in_Carla(data, conncetion=None, time_look=0.05):
     live_mode = True
 
@@ -181,14 +192,16 @@ y_cords = []
 ttc_s = []
 speeds = []
 
-for x in sorted_data[-10:]:
+# Show the first x rows of the sorted data
+bestXrows = 10
+for x in sorted_data[-bestXrows:]:
     # if x[6] < 0.5:
     x_cords.append(x[1])
     y_cords.append(x[2])
     ttc_s.append(x[6])
     speeds.append(x[8])
 
-# Show the first x rows of the sorted data
+
 eintrag = 3
 show_x_rows_in_Carla(sorted_data[0:1])
 

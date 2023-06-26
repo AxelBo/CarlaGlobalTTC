@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 # Data
 import numpy as np
 
+# Number of elements in each cluster
 data = [7, 80, 98, 31, 15, 70, 171, 21, 13, 5, 6, 68, 16, 6, 42, 4, 6, 9, 29, 4, 3, 3]
 
 # X-axis labels

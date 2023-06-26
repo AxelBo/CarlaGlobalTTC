@@ -7,7 +7,7 @@ import connectionCarla
 
 import subprocess
 
-
+# Check if a two lines intersect
 def line_intersection(line1, line2):
     xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
     ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
@@ -25,7 +25,7 @@ def line_intersection(line1, line2):
     y = det(d, ydiff) / div
     return x, y
 
-
+# Returns the edge of a polygon
 def calc_bounding_box(p0, angle, length, width):
     # This function calculates the bounding box of a rectangle given its starting point (p0), orientation angle, length,
     # and width. It returns a Shapely Polygon representing the bounding box.
@@ -52,32 +52,32 @@ def calc_bounding_box(p0, angle, length, width):
     point4 = (x, y)
     return Polygon([point1, point2, point4, point3])
 
-
+# Eucledian distance between two points
 def dist_xy(pos1, pos2):
     return math.sqrt(
         (pos1[0] - pos2[0]) ** 2 +
         (pos1[1] - pos2[1]) ** 2
     )
 
-
+# Vel 3d to m/s
 def velocity_3d_to_ms(velocity3d):
     return math.sqrt(velocity3d.x ** 2 + velocity3d.y ** 2 + velocity3d.z ** 2)
 
-
+# Velcociy 3d difference between two actors in m/s
 def velocity_3d_diff(velocity3d, velocity3d2):
     v_x = velocity3d.x - velocity3d2.x
     v_y = velocity3d.y - velocity3d2.y
     v_z = velocity3d.z - velocity3d2.z
     return math.sqrt(v_x ** 2 + v_y ** 2 + v_z ** 2)
 
-
+# Event for handle collision
 def on_collision(event):
     other_actor = event.other_actor
     print("Collison")
     if 'walker' in other_actor.type_id and 'vehicle' in event.self_actor.type_id:
         print(f"Collision between {event.self_actor.type_id} and {other_actor.type_id}")
 
-
+# Distance between two actors in m
 def distance_actor(actor1, actor2):
     try:
         pos1 = actor1.get_location()
@@ -91,7 +91,7 @@ def distance_actor(actor1, actor2):
 
 class CarlaTimeToCollision:
 
-    def __int__(self, vehicles_list, walkers_list, connection, run):
+    def __int__(self, vehicles_list, walkers_list, connection, run, timeLookAhead=1.5, max_distance_ttc=50):
         self.walkers_list = walkers_list
         self.run_id = run
         self.vehicles_list = []
@@ -100,7 +100,7 @@ class CarlaTimeToCollision:
         # self.vehicles_list = vehicles_list
         self.connection = connection
         self.ttcList = []
-        self.max_distance_ttc = 50  # in meter
+        self.max_distance_ttc = max_distance_ttc  # in meter
         self.timeframe = 0
         self.faildedCars = 0
         self.faildedWaler = 0
@@ -109,7 +109,7 @@ class CarlaTimeToCollision:
         self.fotoCount = 0
         self.collision_sensor_bp = connection.world.get_blueprint_library().find('sensor.other.collision')
         # === TTC Calculation ===
-        self.timeLookAhead = 1.5
+        self.timeLookAhead = timeLookAhead
         self.lengthWalker = 0.187679 * 2
         self.widthWalker = 0.187679
         self.lengthVehicle = 2.395890
@@ -122,6 +122,7 @@ class CarlaTimeToCollision:
                                                                      attach_to=actor)
                 collision_sensor.listen(lambda event: on_collision(event))
 
+    # Stepwise calculation of TTC
     def ttc_collision_search(self, timetoCollisionSearch, timeLookAhead, vel1, vel2, rot1, rot2, posWalker, posVehicle):
         while timetoCollisionSearch < timeLookAhead:
             length = vel1 * timetoCollisionSearch
@@ -144,7 +145,7 @@ class CarlaTimeToCollision:
             else:
                 timetoCollisionSearch += 0.1
         return 999
-
+    # Calculate TTC bewteen vehicles and walkers
     def ttc(self):
         for index in range(len(self.vehicles_list)):
             ### Find all near by vehicles
@@ -213,7 +214,6 @@ class CarlaTimeToCollision:
                         cam_bp.set_attribute("fov", '110')
                         cam_location = carla.Location(x=-2, y=0, z=3)
                         cam_transform = carla.Transform(cam_location)
-                        # try:
 
                         velocity = vehicle.get_velocity()
                         speed = math.sqrt(velocity.x ** 2 + velocity.y ** 2 + velocity.z ** 2)
@@ -223,7 +223,7 @@ class CarlaTimeToCollision:
                             if not sysncModeEnable:
                                 camera = CarlaCamera(vehicle, path, self.connection)
 
-
+                            # Function for taking a picture of the situation (crashes sometimes)
                             # ego_cam = self.connection.world.spawn_actor(cam_bp, cam_transform, attach_to=vehicle,
                             #                                             attachment_type=carla.AttachmentType.Rigid)
 
@@ -262,6 +262,7 @@ class CarlaTimeToCollision:
                     print("Caught an exception:", type(e).__name__)
                     print("Error message:", str(e))
 
+    # Save the recorded Image to the given path
     def saveImage(self, image):
         if (self.fotoCount % 1 == 0):
             print('foto?')
@@ -272,6 +273,7 @@ class CarlaTimeToCollision:
         del self.sensorlist[0]
         image.save_to_disk(path)
 
+    # Returns all actors in the world
     def getAllActorsFromWorld(self):
         allAcotrs = self.connection.world.get_actors()
         self.vehicles_list = []
@@ -290,6 +292,7 @@ class CarlaTimeToCollision:
               len(self.walkers_list) / 2, "walkers and ",
               len(otherAcots), "other Acors")
 
+    # Recording the Carla Simulation
     def recordingCarla(self, savepath):
         savepath = "/" + savepath
         print("Recording on file: ",
@@ -297,7 +300,7 @@ class CarlaTimeToCollision:
                   savepath, True))
 
 class CarlaCamera:
-
+    # Class for attaching a camera to a vehicle and saving the image
     def __init__(self, vehicle, path, con):
         self.vehicle = vehicle
         self.camera_bp = None
@@ -328,11 +331,12 @@ class CarlaCamera:
 
 
 if __name__ == '__main__':
-
+    # Run the programm x times
     for run in range(6):
         x = datetime.datetime.now()
         timestamp = str(x.year) + "_" + str(x.month) + "_" + str(x.day) + "_" + str(x.hour) + "_" + str(x.minute)
 
+        #### Parameters
         cars = 50
         walker = 60
         simulationTime = 1 * 60
@@ -348,6 +352,7 @@ if __name__ == '__main__':
         spawn.spawnVehicles(cars)
         spawn.spawnWalker(walker)
 
+        #### Start the Time to Collision calculation
         ttc = CarlaTimeToCollision()
         ttc.__int__(spawn.vehicles_list, spawn.walkers_list, conncetion, str(run))
 
@@ -377,7 +382,27 @@ if __name__ == '__main__':
         f.close()
         ttc.connection.client.stop_recorder()
         try:
-            # Beenden der Anwendung auf Windows
+            # BAT File for Loop to restart the Carla Simulation
+            # @echo
+            # off
+            # :loop
+            # tasklist | find / i
+            # "CarlaUE4.exe" > nul
+            # if errorlevel 1 (
+            # echo CarlaUE4 is not running.Starting now...
+            # start D:\
+            #     GIT\CARLA_0
+            # .9
+            # .13\WindowsNoEditor\CarlaUE4.exe - carla - server - windowed - ResX = 800 - ResY = 600 - carla - world - port = 2000
+            # ) else (
+            #     echo CarlaUE4 is already running.
+            # )
+            #
+            # timeout / t
+            # 5 / nobreak > nul
+            # goto: loop
+
+            # Kill the Carla Simulation
             subprocess.call(['taskkill', '/f', '/im', 'CarlaUE4-Win64-Shipping.exe'])
             time.sleep(1)
             subprocess.call(['taskkill', '/f', '/im', 'CarlaUE4.exe'])

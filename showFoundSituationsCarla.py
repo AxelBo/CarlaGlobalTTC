@@ -14,6 +14,7 @@ y = data[2].astype(float)
 conncetion = connectionCarla.CarlaConnection()
 conncetion.__int__(reloadWorld=True)
 
+# Extract x and y coordinates for the vehicles and draw it in Carla
 for i,j in zip(x,y):
     location = carla.Location(x=i, y=j, z=10)
     conncetion.draw_waypoint(location, "x", 1000)

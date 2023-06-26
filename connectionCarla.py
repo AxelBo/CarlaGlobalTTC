@@ -20,6 +20,7 @@ import time
 
 
 class CarlaConnection():
+    # Load the map and set the spectator
     def __int__(self, townName="Town03", host="localhost", reloadWorld=True,
                 camaraLocation=carla.Location(x=-200, y=0, z=150), camRotation=None, render=True, syncMode=False, port=2000, delta=0.05, setCamerView=True):
         # === Carla ===
@@ -45,12 +46,14 @@ class CarlaConnection():
         if setCamerView:
             self.set_camara_view(camaraLocation, camRotation)
 
+    # Reload the map in case the connection is lost
     def reinitialize(self):
         self.client = carla.Client(self.host, self.port)
         self.client.set_timeout(20.0)
         self.world = self.client.get_world()
         time.sleep(1)
 
+    # Set the synchronous mode for the simulation and render mode
     def setSynchronous_mode(self, delta=0.05, no_render=True, reloadWorld=True):
         settings = self.world.get_settings()
         settings.synchronous_mode = True  # Enables synchronous mode
@@ -62,6 +65,7 @@ class CarlaConnection():
         if reloadWorld:
             self.client.reload_world(False)
 
+    # Set the spectator view
     def set_camara_view(self, location, camRotation):
         # === Walker View Camera ===
         # X und Y sind gedreht so....
@@ -72,6 +76,7 @@ class CarlaConnection():
             camRotation = carla.Rotation(pitch=-60)
         spectator.set_transform(carla.Transform(transform.location, camRotation))
 
+    # Draw a point into Carla intensity set the color
     def draw_waypoint(self, location, index, life_time=120.0, intensity=1):
         if intensity < 0.33:
             color = carla.Color(r=0, g=255, b=0)
@@ -103,6 +108,7 @@ class CarlaSpawning():
         self.collision_locations = []
         self.spawn_points = self.world.get_map().get_spawn_points()
 
+    # function to spawn the vehicles and set the autopilot
     def spawnVehicles(self, number_of_cars=30):
         car_bp = self.world.get_blueprint_library().filter('vehicle.tesla.model3')[0]
 
@@ -118,21 +124,18 @@ class CarlaSpawning():
         for vehicle in self.vehicles_list:
             vehicle.set_autopilot(True, tm_port)
 
+    # function to spawn the walkers with walker controller
     def spawnWalker(self, number_of_walkers=50):
 
         blueprintsWalkers = self.world.get_blueprint_library().filter('0012')[0]
         all_id = []
         walkers_list_local = []
         SpawnActor = carla.command.SpawnActor
-        SetAutopilot = carla.command.SetAutopilot
-        SetVehicleLightState = carla.command.SetVehicleLightState
-        FutureActor = carla.command.FutureActor
 
         # -------------
         # Spawn Walkers
         # -------------
         # some settings
-        percentagePedestriansRunning = 0.50  # how many pedestrians will run
         percentagePedestriansCrossing = 0.3  # how many pedestrians will walk through the road
         # 1. take all the random locations to spawn
         spawn_points = []
